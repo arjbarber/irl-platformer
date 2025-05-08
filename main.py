@@ -38,16 +38,18 @@ class Player:
         self.velocity_y += GRAVITY
         self.rect.y += self.velocity_y
 
-    def check_collision(self, platforms: list):
+    def check_collision(self, platforms: list, score: int = 0):
         for platform in platforms:
             if self.rect.colliderect(platform.rect):
                 if self.velocity_y > 0:  # Falling down
                     self.rect.bottom = platform.rect.top
                     self.velocity_y = 0
                     self.is_jumping = False
+                    return platform.platform_number + 1  # Increment score based on platform number
                 elif self.velocity_y < 0:  # Moving up
                     self.rect.top = platform.rect.bottom
                     self.velocity_y = 0
+        return score
 
     def prevent_falling_through_floor(self):
         if self.rect.bottom > HEIGHT:
@@ -59,7 +61,8 @@ class Player:
         pygame.draw.rect(surface, BLUE, self.rect)
 
 class Platform:
-    def __init__(self, x, y, width, height):
+    def __init__(self, x, y, width, height, platform_number):
+        self.platform_number = platform_number
         self.rect = pygame.Rect(x, y, width, height)
 
     def draw(self, surface):
@@ -82,11 +85,14 @@ def generate_platforms(platforms, player):
             attempts = 0
             max_attempts = 100  # Limit the number of attempts to prevent infinite loop
             while (abs(new_x - last_platform.rect.x) > max_horizontal_distance or abs(new_y - last_platform.rect.top) > max_vertical_distance) and attempts < max_attempts:
+                print(f"Attempt {attempts}: new_x = {new_x}, new_y = {new_y}")
                 new_x = random.randint(0, WIDTH - 200)
                 new_y = last_platform.rect.top - random.randint(100, 150)
                 attempts += 1
 
-        platforms.append(Platform(new_x, new_y, 200, 20))
+        # Assign a unique platform number
+        platform_number = platforms[-1].platform_number + 1 if platforms else 0
+        platforms.append(Platform(new_x, new_y, 200, 20, platform_number))
 
     return platforms
 
@@ -100,16 +106,15 @@ def show_you_lost_screen():
 
 def main():
     pygame.display.set_caption("Scrolling Platformer")
-    player = Player(WIDTH // 2, HEIGHT - 60, 50, 50, 5, 15)
+    player = Player(WIDTH // 2, HEIGHT - 60, 50, 50, 10, 15)
     platforms = [
-        Platform(200, 500, 400, 20),
-        Platform(100, 400, 200, 20),
-        Platform(500, 300, 200, 20),
+        Platform(200, 500, 400, 20, 0),
+        Platform(100, 400, 200, 20, 1),
+        Platform(500, 300, 200, 20, 2),
     ]
-    score = 0
-    last_platform_y = player.rect.bottom
 
     run = True
+    score = 0
     while run:
         clock.tick(FPS)
         screen.fill(WHITE)
@@ -121,19 +126,13 @@ def main():
         player.move(keys)
 
         player.apply_gravity()
-        player.check_collision(platforms)
+        score = player.check_collision(platforms, score)
         player.prevent_falling_through_floor()
 
         # Check if player touches the bottom of the screen
         if player.rect.bottom >= HEIGHT and score > 0:
             show_you_lost_screen()
             return main()  # Restart the game
-
-        # Update score when a new platform is reached
-        for platform in platforms:
-            if player.rect.bottom <= platform.rect.top and platform.rect.top < last_platform_y:
-                score += 1
-                last_platform_y = platform.rect.top
 
         # Scroll platforms down if the player is above a certain height
         if player.rect.top < HEIGHT // 3:
@@ -145,15 +144,15 @@ def main():
         # Generate new platforms
         platforms = generate_platforms(platforms, player)
 
-        # Draw platforms and player
-        for platform in platforms:
-            platform.draw(screen)
-        player.draw(screen)
-
         # Display score
         font = pygame.font.Font(None, 36)
         score_text = font.render(f"Score: {score}", True, BLACK)
         screen.blit(score_text, (10, 10))
+
+        # Draw platforms and player
+        for platform in platforms:
+            platform.draw(screen)
+        player.draw(screen)
 
         pygame.display.update()
 
