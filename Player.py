@@ -23,12 +23,9 @@ class Player:
         self.surface: pygame.Surface = pygame.transform.scale(PLAYER, (self.rect.width, self.rect.height))
 
     def move(self, keys):
-        # # Use arrow keys for movement
-        # if keys[pygame.K_LEFT]:
-        #     self.rect.x -= self.speed
-        # if keys[pygame.K_RIGHT]:
-        #     self.rect.x += self.speed
+        # Use arrow keys for movement
         if keys[pygame.K_UP] and not self.is_jumping:
+            print("Keyboard jump triggered")  # Debug statement
             self.jump()
 
         # Use camera input for movement
@@ -50,8 +47,7 @@ class Player:
             player_x = int(nose_x * screen_width)
 
             # Update player position based on nose position
-            self.rect.x = player_x - self.rect.width // 2 if player_x - self.rect.width // 2 > 0 else 0
-            self.rect.x = player_x + self.rect.width // 2 if player_x + self.rect.width // 2 < screen_width else screen_width - self.rect.width
+            self.rect.x = max(0, min(player_x - self.rect.width // 2, screen_width - self.rect.width))
 
             # Jumping logic
             self.height.append(landmarks[self.mp_pose.PoseLandmark.LEFT_HIP].y)
@@ -60,6 +56,7 @@ class Player:
 
             # Check if the hip has moved upward significantly to trigger a jump
             if len(self.height) > 2 and (self.height[-2] - self.height[-1] > 0.05) and not self.is_jumping:
+                print("Camera jump triggered")  # Debug statement
                 self.jump()
 
             # Draw landmarks on the frame
@@ -73,16 +70,19 @@ class Player:
         cv2.waitKey(1)
 
     def apply_gravity(self):
+        print(f"Before gravity: velocity_y={self.velocity_y}, rect.y={self.rect.y}")  # Debug statement
         self.velocity_y += GRAVITY
         self.rect.y += self.velocity_y
+        print(f"After gravity: velocity_y={self.velocity_y}, rect.y={self.rect.y}")  # Debug statement
 
     def check_collision(self, platforms: list, score: int = 0):
         for platform in platforms:
             if self.rect.colliderect(platform.rect):
                 if self.velocity_y > 0:  # Falling down
+                    print("Collision detected, resetting jump")  # Debug statement
                     self.rect.bottom = platform.rect.top
                     self.velocity_y = 0
-                    self.is_jumping = False
+                    self.is_jumping = False  # Reset jumping flag
                     return platform.platform_number + 1  # Increment score based on platform number
         return score
 
@@ -93,8 +93,10 @@ class Player:
             self.is_jumping = False
 
     def jump(self):
+        print(f"Jump initiated: velocity_y set to {self.jump_power}")  # Debug statement
         self.velocity_y = self.jump_power
         self.is_jumping = True
 
     def draw(self, surface):
         pygame.draw.rect(surface, config.BLUE, self.rect)
+        #surface.blit(self.surface, (self.rect.x, self.rect.y))

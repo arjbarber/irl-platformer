@@ -16,13 +16,17 @@ class Platform:
             RED_PLATFORM if self.type == "red" else GREEN_PLATFORM if self.type == "green" else PLATFORM,
             (self.rect.width, self.rect.height)
         )
-        self.break_timer = 3 * config.FPS if self.type == "red" else None  # 3 seconds for red platforms
+        self.break_timer = None  # Initialize break timer as None
 
-    def update(self):
-        if self.type == "red" and self.break_timer is not None:
-            self.break_timer -= 1
-            if self.break_timer <= 0:
-                self.rect.y = config.HEIGHT + 1  # Move off-screen to "break"
+    def update(self, player):
+        if self.type == "red":
+            if self.rect.colliderect(player.rect):  # Start breaking when the player touches the platform
+                if self.break_timer is None:
+                    self.break_timer = 3 * config.FPS  # Initialize the break timer
+            if self.break_timer is not None:
+                self.break_timer -= 1
+                if self.break_timer <= 0:
+                    self.rect.y = config.HEIGHT + 1  # Move off-screen to "break"
 
     def draw(self, surface):
         surface.blit(self.surface, (self.rect.x, self.rect.y))

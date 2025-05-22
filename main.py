@@ -48,7 +48,7 @@ def show_you_lost_screen():
 
 def main():
     pygame.display.set_caption("Scrolling Platformer")
-    player = Player(config.WIDTH // 2, config.HEIGHT - 60, 50, 50, 10, 15)
+    player = Player(config.WIDTH // 2, 500, 50, 50, 10, 15)
     platforms = [
         Platform(200, 500, 400, 20, 0),
         Platform(100, 400, 200, 20, 1),
@@ -78,8 +78,6 @@ def main():
         else:
             player.jump_power = 15  # Reset jump power
 
-        player.prevent_falling_through_floor()
-
         # Check if player touches the bottom of the screen
         if player.rect.bottom >= config.HEIGHT and score > 0:
             show_you_lost_screen()
@@ -97,12 +95,15 @@ def main():
 
         # Update and draw platforms
         for platform in platforms:
-            platform.update()
+            platform.update(player)  # Pass the player to the update method
             platform.draw(screen)
+
+        # Draw the player
+        player.draw(screen)
 
         # Display score
         font = pygame.font.Font(None, 36)
-        score_text = font.render(f"Score: {score}", True, config.BLACK)
+        score_text = font.render(f"Score: {score-1}", True, config.BLACK)
         screen.blit(score_text, (10, 10))
 
         pygame.display.update()
