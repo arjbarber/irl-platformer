@@ -31,9 +31,10 @@ def generate_platforms(platforms, player):
                 new_y = last_platform.rect.top - random.randint(100, 150)
                 attempts += 1
 
-        # Assign a unique platform number
+        # Assign a unique platform number and determine platform type
         platform_number = platforms[-1].platform_number + 1 if platforms else 0
-        platforms.append(Platform(new_x, new_y, 200, 20, platform_number))
+        platform_type = "red" if random.randint(1, 10) == 1 else "green" if random.randint(1, 10) == 1 else "normal"
+        platforms.append(Platform(new_x, new_y, 200, 20, platform_number, platform_type))
 
     return platforms
 
@@ -68,6 +69,15 @@ def main():
 
         player.apply_gravity()
         score = player.check_collision(platforms, score)
+
+        # Handle green platform effect
+        for platform in platforms:
+            if platform.type == "green" and player.rect.colliderect(platform.rect):
+                player.jump_power = 30  # Double jump power
+                break
+        else:
+            player.jump_power = 15  # Reset jump power
+
         player.prevent_falling_through_floor()
 
         # Check if player touches the bottom of the screen
@@ -85,15 +95,15 @@ def main():
         # Generate new platforms
         platforms = generate_platforms(platforms, player)
 
+        # Update and draw platforms
+        for platform in platforms:
+            platform.update()
+            platform.draw(screen)
+
         # Display score
         font = pygame.font.Font(None, 36)
         score_text = font.render(f"Score: {score}", True, config.BLACK)
         screen.blit(score_text, (10, 10))
-
-        # Draw platforms and player
-        for platform in platforms:
-            platform.draw(screen)
-        player.draw(screen)
 
         pygame.display.update()
 

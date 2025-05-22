@@ -3,8 +3,11 @@ pygame.init()
 import config
 import cv2
 import mediapipe as mp
+import os
 
 GRAVITY = 0.8
+
+PLAYER = pygame.image.load(os.path.join('assets', 'player.png'))
 
 class Player:
     def __init__(self, x: int, y: int, width: int, height: int, speed: int, jump_power: int):
@@ -17,6 +20,7 @@ class Player:
         self.pose = self.mp_pose.Pose()
         self.cap = cv2.VideoCapture(0)
         self.height = []
+        self.surface: pygame.Surface = pygame.transform.scale(PLAYER, (self.rect.width, self.rect.height))
 
     def move(self, keys):
         # # Use arrow keys for movement
@@ -24,9 +28,8 @@ class Player:
         #     self.rect.x -= self.speed
         # if keys[pygame.K_RIGHT]:
         #     self.rect.x += self.speed
-        # if keys[pygame.K_UP] and not self.is_jumping:
-        #     self.velocity_y = self.jump_power
-        #     self.is_jumping = True
+        if keys[pygame.K_UP] and not self.is_jumping:
+            self.jump()
 
         # Use camera input for movement
         ret, frame = self.cap.read()
@@ -57,8 +60,7 @@ class Player:
 
             # Check if the hip has moved upward significantly to trigger a jump
             if len(self.height) > 2 and (self.height[-2] - self.height[-1] > 0.05) and not self.is_jumping:
-                self.velocity_y = self.jump_power
-                self.is_jumping = True
+                self.jump()
 
             # Draw landmarks on the frame
             mp.solutions.drawing_utils.draw_landmarks(
@@ -89,6 +91,10 @@ class Player:
             self.rect.bottom = config.HEIGHT
             self.velocity_y = 0
             self.is_jumping = False
+
+    def jump(self):
+        self.velocity_y = self.jump_power
+        self.is_jumping = True
 
     def draw(self, surface):
         pygame.draw.rect(surface, config.BLUE, self.rect)
