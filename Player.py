@@ -3,7 +3,6 @@ pygame.init()
 import config
 import cv2
 import mediapipe as mp
-import os
 
 GRAVITY = 0.8
 
@@ -17,11 +16,12 @@ class Player:
         self.mp_pose = mp.solutions.pose
         self.pose: mp.soulutions.pose.Pose = self.mp_pose.Pose()
         self.cap: cv2.VideoCapture = cv2.VideoCapture(0)
-        self.heigh: list = []
+        self.height: list = []
 
     def move(self, keys):
         # Use arrow keys for movement
         if keys[pygame.K_UP] and not self.is_jumping:
+            print("jumping")
             self.velocity_y = self.jump_power
             self.is_jumping = True
 
@@ -61,24 +61,22 @@ class Player:
                 frame, results.pose_landmarks, self.mp_pose.POSE_CONNECTIONS
             )
 
-        # Display the camera feed
-        frame = cv2.flip(frame, 1)  # Mirror the frame in the x direction
-        cv2.imshow("Camera Feed", frame)
-        cv2.waitKey(1)
+        # # Display the camera feed
+        # frame = cv2.flip(frame, 1)  # Mirror the frame in the x direction
+        # cv2.imshow("Camera Feed", frame)
+        # cv2.waitKey(1)
 
     def apply_gravity(self):
-        print(f"Before gravity: velocity_y={self.velocity_y}, rect.y={self.rect.y}")  # Debug statement
-        self.velocity_y += GRAVITY
-        self.rect.y += self.velocity_y
-        print(f"After gravity: velocity_y={self.velocity_y}, rect.y={self.rect.y}")  # Debug statement
+        self.velocity_y -= GRAVITY
+        self.rect.y -= self.velocity_y
 
     def check_collision(self, platforms: list, score: int = 0):
         for platform in platforms:
             if self.rect.colliderect(platform.rect):
-                if self.velocity_y > 0:  # Falling down
-                    print("Collision detected, resetting jump")  # Debug statement
+                if self.velocity_y < 0:  # Falling down
                     self.rect.bottom = platform.rect.top
                     self.velocity_y = 0
+                    print("reset velocity")
                     self.is_jumping = False  # Reset jumping flag
                     return platform.platform_number + 1  # Increment score based on platform number
         return score

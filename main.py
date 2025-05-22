@@ -65,10 +65,12 @@ def main():
                 run = False
 
         keys = pygame.key.get_pressed()
-        player.move(keys)
 
         player.apply_gravity()
         score = player.check_collision(platforms, score)
+        player.prevent_falling_through_floor()
+        player.move(keys)
+        print(player.velocity_y)
 
         # Handle green platform effect
         for platform in platforms:
