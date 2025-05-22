@@ -7,8 +7,6 @@ import os
 
 GRAVITY = 0.8
 
-PLAYER = pygame.image.load(os.path.join('assets', 'player.png'))
-
 class Player:
     def __init__(self, x: int, y: int, width: int, height: int, speed: int, jump_power: int):
         self.rect: pygame.Rect = pygame.Rect(x, y, width, height)
@@ -17,16 +15,15 @@ class Player:
         self.velocity_y: int = 0
         self.is_jumping: bool = False
         self.mp_pose = mp.solutions.pose
-        self.pose = self.mp_pose.Pose()
-        self.cap = cv2.VideoCapture(0)
-        self.height = []
-        self.surface: pygame.Surface = pygame.transform.scale(PLAYER, (self.rect.width, self.rect.height))
+        self.pose: mp.soulutions.pose.Pose = self.mp_pose.Pose()
+        self.cap: cv2.VideoCapture = cv2.VideoCapture(0)
+        self.heigh: list = []
 
     def move(self, keys):
         # Use arrow keys for movement
         if keys[pygame.K_UP] and not self.is_jumping:
-            print("Keyboard jump triggered")  # Debug statement
-            self.jump()
+            self.velocity_y = self.jump_power
+            self.is_jumping = True
 
         # Use camera input for movement
         ret, frame = self.cap.read()
@@ -56,8 +53,8 @@ class Player:
 
             # Check if the hip has moved upward significantly to trigger a jump
             if len(self.height) > 2 and (self.height[-2] - self.height[-1] > 0.05) and not self.is_jumping:
-                print("Camera jump triggered")  # Debug statement
-                self.jump()
+                self.velocity_y = self.jump_power
+                self.is_jumping = True
 
             # Draw landmarks on the frame
             mp.solutions.drawing_utils.draw_landmarks(
@@ -92,11 +89,5 @@ class Player:
             self.velocity_y = 0
             self.is_jumping = False
 
-    def jump(self):
-        print(f"Jump initiated: velocity_y set to {self.jump_power}")  # Debug statement
-        self.velocity_y = self.jump_power
-        self.is_jumping = True
-
     def draw(self, surface):
         pygame.draw.rect(surface, config.BLUE, self.rect)
-        #surface.blit(self.surface, (self.rect.x, self.rect.y))
